@@ -8,7 +8,7 @@ type Props = {
   onAbrir: () => void;
 };
 
-export default function EmpresaCard({ nome, atividade, nif, index, onAbrir }: Props) {
+export default function EmpresaCard({ nome, atividade, nif, /*index,*/ onAbrir }: Props) {
   return (
     <div className="card p-3 shadow-sm">
       <h5>{nome}</h5>

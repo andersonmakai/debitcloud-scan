@@ -1,7 +1,7 @@
 import React from "react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import { Container, Row, Col } from "react-bootstrap";
+import { Container, /*Row, Col*/ } from "react-bootstrap";
 
 type Props = {
   children: React.ReactNode;
