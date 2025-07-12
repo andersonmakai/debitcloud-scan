@@ -1,14 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Button, Form } from 'react-bootstrap';
 
 const comandos: { [key: string]: string | (() => void) } = {
-  // Funções simuladas
   "criar fatura": () => alert("Abrindo criação de fatura..."),
   "adicionar despesa": () => alert("Abrindo adição de despesa..."),
   "ver relatórios": () => alert("Mostrando relatórios..."),
   "abrir clientes": () => alert("Abrindo clientes..."),
-
-  // Saudações e interações comuns
   "olá": "Olá! Como posso te ajudar hoje?",
   "bom dia": "Bom dia! Pronto para começar?",
   "boa tarde": "Boa tarde! No que posso ajudar?",
@@ -18,21 +15,22 @@ const comandos: { [key: string]: string | (() => void) } = {
   "ajuda": "Você pode dizer coisas como: criar fatura, adicionar despesa, abrir clientes..."
 };
 
-
 export default function Chatbot() {
   const [aberto, setAberto] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const [resposta, setResposta] = useState<string[]>([]);
+  const [gravando, setGravando] = useState(false);
+  const [tempo, setTempo] = useState(0);
+  const recognitionRef = useRef<any>(null);
+  const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null); // Corrige o erro NodeJS
 
-  const toggleChat = () => setAberto(!aberto);
+  const toggleChat = () => setAberto(prev => !prev); // Corrige o erro TS2304
 
   const tratarMensagem = (msg: string) => {
     const mensagemLower = msg.toLowerCase();
-  
     const chaveEncontrada = Object.keys(comandos).find(key =>
       mensagemLower.includes(key)
     );
-  
     if (chaveEncontrada) {
       const acao = comandos[chaveEncontrada];
       if (typeof acao === "function") {
@@ -48,8 +46,6 @@ export default function Chatbot() {
       ]);
     }
   };
-  
-      
 
   const handleEnviar = () => {
     if (!mensagem.trim()) return;
@@ -58,12 +54,15 @@ export default function Chatbot() {
     setMensagem("");
   };
 
-  // 🎙️ Voz (API Web Speech)
-  useEffect(() => {
-    const recognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!recognition) return;
+  const iniciarGravacao = () => {
+    const recognitionConstructor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!recognitionConstructor) {
+      alert("Seu navegador não suporta reconhecimento de voz.");
+      return;
+    }
 
-    const rec = new recognition();
+    const rec = new recognitionConstructor();
+    recognitionRef.current = rec;
     rec.lang = "pt-PT";
     rec.continuous = false;
     rec.interimResults = false;
@@ -73,13 +72,27 @@ export default function Chatbot() {
       setMensagem(texto);
       setResposta(prev => [...prev, `🎙️ ${texto}`]);
       tratarMensagem(texto);
+      pararGravacao();
     };
 
-    const btn = document.getElementById("microfone");
-    if (btn) {
-      btn.onclick = () => rec.start();
+    rec.onerror = (e: any) => {
+      console.error("Erro no microfone:", e);
+      pararGravacao();
+    };
+
+    rec.start();
+    setGravando(true);
+    setTempo(0);
+    intervaloRef.current = setInterval(() => setTempo(prev => prev + 1), 1000);
+  };
+
+  const pararGravacao = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
     }
-  }, []);
+    setGravando(false);
+    if (intervaloRef.current) clearInterval(intervaloRef.current);
+  };
 
   return (
     <>
@@ -117,6 +130,7 @@ export default function Chatbot() {
             {resposta.map((msg, i) => (
               <div key={i} className="mb-2">{msg}</div>
             ))}
+            {gravando && <div className="text-danger">🎤 Gravando... {tempo}s</div>}
           </div>
           <div className="card-footer d-flex gap-2">
             <Form.Control
@@ -126,7 +140,12 @@ export default function Chatbot() {
               placeholder="Digite um comando..."
             />
             <Button variant="success" onClick={handleEnviar}>Enviar</Button>
-            <Button variant="secondary" id="microfone">🎤</Button>
+            <Button
+              variant={gravando ? "danger" : "secondary"}
+              onClick={gravando ? pararGravacao : iniciarGravacao}
+            >
+              {gravando ? "⏹️" : "🎤"}
+            </Button>
           </div>
         </div>
       )}
