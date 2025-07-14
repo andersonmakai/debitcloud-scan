@@ -12,6 +12,8 @@ import Diario from "../pages/Contabilidade/Diario";
 import Balancete from "../pages/Contabilidade/Balancete";
 import Razao from "../pages/Contabilidade/Razao";
 import Balancetes from "../pages/Contabilidade/Balancetes";
+import CadastroPrincipal from "@/pages/CadastroPrincipal";
+
 
 const AppRoutes = () => {
   return (
@@ -29,6 +31,7 @@ const AppRoutes = () => {
       <Route path="/contabilidade/balancete" element={<Balancete />} />
       <Route path="/contabilidade/razao" element={<Razao />} />
       <Route path="/contabilidade/balancetes" element={<Balancetes />} />
+      <Route path="/cadastro" element={<CadastroPrincipal />} />
     </Routes>
   );
 };
