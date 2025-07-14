@@ -1,5 +1,6 @@
-import { Card } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { Card, Alert } from "react-bootstrap";
+import { useState } from "react";
 import './CadastroPrincipal.css';
 
 const cards = [
@@ -61,6 +62,21 @@ const cards = [
 
 export default function CadastroPrincipal() {
   const navigate = useNavigate();
+  const [showAlert, setShowAlert] = useState(false);
+
+  const handleSalvar = () => {
+    const dados = localStorage.getItem("dadosEmpresa");
+
+    if (dados) {
+      setShowAlert(true);
+      setTimeout(() => {
+        setShowAlert(false);
+        navigate("/"); // ← volta para a tela principal (parecida com Manager.io)
+      }, 2000);
+    } else {
+      alert("⚠️ Preencha e salve os dados da empresa antes de continuar.");
+    }
+  };
 
   return (
     <div className="container py-4">
@@ -73,9 +89,17 @@ export default function CadastroPrincipal() {
             className="form-control"
             style={{ maxWidth: 200 }}
           />
-          <button className="btn btn-outline-dark rounded">+ Novo</button>
+          <button className="btn btn-success" onClick={handleSalvar}>
+            💾 Salvar
+          </button>
         </div>
       </div>
+
+      {showAlert && (
+        <Alert variant="success" className="text-white bg-success">
+          ✅ Cadastramento feito!
+        </Alert>
+      )}
 
       <div className="row g-4">
         {cards.map((card, index) => (
@@ -97,3 +121,4 @@ export default function CadastroPrincipal() {
     </div>
   );
 }
+

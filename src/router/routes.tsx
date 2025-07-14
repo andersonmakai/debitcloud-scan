@@ -13,6 +13,7 @@ import Balancete from "../pages/Contabilidade/Balancete";
 import Razao from "../pages/Contabilidade/Razao";
 import Balancetes from "../pages/Contabilidade/Balancetes";
 import CadastroPrincipal from "@/pages/CadastroPrincipal";
+import EmpresaForm from "@/pages/cadastro/EmpresaForm";
 
 
 const AppRoutes = () => {
@@ -32,6 +33,7 @@ const AppRoutes = () => {
       <Route path="/contabilidade/razao" element={<Razao />} />
       <Route path="/contabilidade/balancetes" element={<Balancetes />} />
       <Route path="/cadastro" element={<CadastroPrincipal />} />
+      <Route path="/cadastro/empresa" element={<EmpresaForm />} />
     </Routes>
   );
 };

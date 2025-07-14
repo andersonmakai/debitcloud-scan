@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import Header from '../components/Header';
 import EmpresaCard from '../components/EmpresaCard';
-import AdicionarModal from '../components/AdicionarModal';
 
 export type Documento = {
   empresa: File[];
@@ -25,34 +24,21 @@ export type Empresa = {
 };
 
 export default function Home() {
-  const [showModal, setShowModal] = useState(false);
-  const [empresas, setEmpresas] = useState<Empresa[]>([{
-    nome: "MakInvest",
-    nif: "500000000",
-    sector: "Construção",
-    pais: "Angola",
-    moeda: "Kz",
-    data: "2025-06-29",
-    email: "makinvest@email.com",
-    telefone: "999999999",
-    endereco: "Rua Principal, Luanda",
-    documento: {
-      empresa: [],
-      funcionarios: [],
-      clientes: []
-    }
-  }]);
-
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Carrega do localStorage
+    const dadosEmpresa = localStorage.getItem("dadosEmpresa");
+    if (dadosEmpresa) {
+      setEmpresas([JSON.parse(dadosEmpresa)]);
+    }
+  }, []);
 
   const handleAbrir = (empresa: Empresa) => {
     localStorage.setItem("empresaSelecionada", JSON.stringify(empresa));
     navigate("/dashboard");
   };
-
-  function adicionarEmpresa(novaEmpresa: Empresa) {
-    setEmpresas(prev => [...prev, novaEmpresa]);
-  }
 
   return (
     <div>
@@ -63,8 +49,11 @@ export default function Home() {
           <h2 className="mb-0">Empresas</h2>
           <div className="d-flex gap-2">
             <button className="btn btn-danger btn-sm">Remover empresa</button>
-            <button className="btn btn-primary btn-sm" onClick={() => navigate("/cadastro")}>
-                Adicionar empresa
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => navigate("/cadastro")}
+            >
+              Adicionar empresa
             </button>
           </div>
         </div>
@@ -74,25 +63,23 @@ export default function Home() {
           <span className="input-group-text bg-light">🔍</span>
         </div>
 
-        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-          {empresas.map((empresa, index) => (
-            <EmpresaCard
-              key={index}
-              nome={empresa.nome}
-              atividade={empresa.sector}
-              nif={empresa.nif}
-              index={index}
-              onAbrir={() => handleAbrir(empresa)}
-            />
-          ))}
-        </div>
+        {empresas.length === 0 ? (
+          <p className="text-muted">Nenhuma empresa cadastrada ainda.</p>
+        ) : (
+          <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {empresas.map((empresa, index) => (
+              <EmpresaCard
+                key={index}
+                nome={empresa.nome}
+                atividade={empresa.sector}
+                nif={empresa.nif}
+                index={index}
+                onAbrir={() => handleAbrir(empresa)}
+              />
+            ))}
+          </div>
+        )}
       </main>
-
-      <AdicionarModal
-        show={showModal}
-        onHide={() => setShowModal(false)}
-        onAdicionar={adicionarEmpresa}
-      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button, Form } from 'react-bootstrap';
 
 const comandos: { [key: string]: string | (() => void) } = {
@@ -22,9 +22,11 @@ export default function Chatbot() {
   const [gravando, setGravando] = useState(false);
   const [tempo, setTempo] = useState(0);
   const recognitionRef = useRef<any>(null);
-  const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null); // Corrige o erro NodeJS
+  /*const intervaloRef = 77useRef<NodeJS.Timeout | null>(null);*/
+  const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const toggleChat = () => setAberto(prev => !prev); // Corrige o erro TS2304
+
+  const toggleChat = () => setAberto(prev => !prev);
 
   const tratarMensagem = (msg: string) => {
     const mensagemLower = msg.toLowerCase();
@@ -55,7 +57,11 @@ export default function Chatbot() {
   };
 
   const iniciarGravacao = () => {
-    const recognitionConstructor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (typeof window === "undefined") return;
+
+    const recognitionConstructor =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
     if (!recognitionConstructor) {
       alert("Seu navegador não suporta reconhecimento de voz.");
       return;
@@ -63,6 +69,7 @@ export default function Chatbot() {
 
     const rec = new recognitionConstructor();
     recognitionRef.current = rec;
+
     rec.lang = "pt-PT";
     rec.continuous = false;
     rec.interimResults = false;
@@ -91,8 +98,22 @@ export default function Chatbot() {
       recognitionRef.current.stop();
     }
     setGravando(false);
-    if (intervaloRef.current) clearInterval(intervaloRef.current);
+    if (intervaloRef.current) {
+      clearInterval(intervaloRef.current);
+      intervaloRef.current = null;
+    }
   };
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (intervaloRef.current) {
+        clearInterval(intervaloRef.current);
+      }
+    };
+  }, []);
 
   return (
     <>
