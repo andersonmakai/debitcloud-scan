@@ -9,8 +9,14 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+
+    // ✅ ESSAS SÃO AS OPÇÕES FALTANDO PARA RESOLVER OS ERROS:
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true
   },
   "include": ["src"]
 }
+
 
