@@ -1,64 +1,127 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button, Form } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
 const comandos: { [key: string]: string | (() => void) } = {
-  "criar fatura": () => alert("Abrindo criação de fatura..."),
-  "adicionar despesa": () => alert("Abrindo adição de despesa..."),
-  "ver relatórios": () => alert("Mostrando relatórios..."),
-  "abrir clientes": () => alert("Abrindo clientes..."),
+  "criar fatura": () => navigateTo("/faturacao/faturas"),
+  "adicionar despesa": () => navigateTo("/cadastro/despesas"),
+  "ver relatórios": () => alert("📊 Mostrando relatórios..."),
+  "abrir clientes": () => navigateTo("/faturacao/clientes"),
   "olá": "Olá! Como posso te ajudar hoje?",
   "bom dia": "Bom dia! Pronto para começar?",
   "boa tarde": "Boa tarde! No que posso ajudar?",
   "boa noite": "Boa noite! Deseja fechar o dia com algum relatório?",
   "tudo bem": "Tudo ótimo! E contigo?",
   "quem és tu": "Sou seu assistente virtual aqui no DebitCloud.",
-  "ajuda": "Você pode dizer coisas como: criar fatura, adicionar despesa, abrir clientes..."
+  "ajuda": "Você pode dizer: criar fatura, adicionar despesa, abrir clientes..."
 };
+
+// Navegação global
+let navigateTo = (url: string) => {};
 
 export default function Chatbot() {
   const [aberto, setAberto] = useState(false);
   const [mensagem, setMensagem] = useState("");
-  const [resposta, setResposta] = useState<string[]>([]);
+  const [respostas, setRespostas] = useState<string[]>(() => {
+    const salvo = localStorage.getItem("chatHistorico");
+    return salvo ? JSON.parse(salvo) : [];
+  });
+
   const [gravando, setGravando] = useState(false);
   const [tempo, setTempo] = useState(0);
-  const recognitionRef = useRef<any>(null);
-  /*const intervaloRef = 77useRef<NodeJS.Timeout | null>(null);*/
-  const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [vozAtiva, setVozAtiva] = useState(() => {
+    const salvo = localStorage.getItem("vozAtiva");
+    return salvo ? JSON.parse(salvo) : true;
+  });
 
+  const [idiomaVoz, setIdiomaVoz] = useState<'pt-PT' | 'pt-BR'>(() => {
+    return (localStorage.getItem("idiomaVoz") as 'pt-PT' | 'pt-BR') || 'pt-PT';
+  });
+
+  const recognitionRef = useRef<any>(null);
+  const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const navigate = useNavigate();
+  const chatRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    navigateTo = (rota: string) => navigate(rota);
+  }, [navigate]);
+
+  useEffect(() => {
+    if (chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight;
+    }
+  }, [respostas]);
+
+  useEffect(() => {
+    localStorage.setItem("vozAtiva", JSON.stringify(vozAtiva));
+  }, [vozAtiva]);
 
   const toggleChat = () => setAberto(prev => !prev);
+
+  const falar = (texto: string) => {
+    if (!vozAtiva) return;
+
+    const synth = window.speechSynthesis;
+
+    const setAndSpeak = () => {
+      const utter = new SpeechSynthesisUtterance(texto);
+      utter.lang = idiomaVoz;
+
+      const vozes = synth.getVoices();
+      const vozEscolhida = vozes.find(v =>
+        idiomaVoz === 'pt-BR' ? v.lang === 'pt-BR' : v.lang === 'pt-PT'
+      );
+
+      if (vozEscolhida) utter.voice = vozEscolhida;
+      synth.speak(utter);
+    };
+
+    if (synth.getVoices().length === 0) {
+      synth.addEventListener("voiceschanged", setAndSpeak, { once: true });
+    } else {
+      setAndSpeak();
+    }
+  };
+
+  const adicionarResposta = (msg: string) => {
+    const novaLista = [...respostas, msg];
+    setRespostas(novaLista);
+    localStorage.setItem("chatHistorico", JSON.stringify(novaLista));
+  };
 
   const tratarMensagem = (msg: string) => {
     const mensagemLower = msg.toLowerCase();
     const chaveEncontrada = Object.keys(comandos).find(key =>
       mensagemLower.includes(key)
     );
+
     if (chaveEncontrada) {
       const acao = comandos[chaveEncontrada];
       if (typeof acao === "function") {
         acao();
-        setResposta(prev => [...prev, `🤖 Executando: ${chaveEncontrada}`]);
+        const resposta = `🤖 Executando: ${chaveEncontrada}`;
+        adicionarResposta(resposta);
+        falar(resposta);
       } else {
-        setResposta(prev => [...prev, `🤖 ${acao}`]);
+        adicionarResposta(`🤖 ${acao}`);
+        falar(acao);
       }
     } else {
-      setResposta(prev => [
-        ...prev,
-        "🤖 Desculpa, não entendi esse comando. Tente dizer algo como 'criar fatura' ou 'ver relatórios'."
-      ]);
+      const texto = "Desculpa, não entendi. Tente algo como 'criar fatura'.";
+      adicionarResposta(`🤖 ${texto}`);
+      falar(texto);
     }
   };
 
   const handleEnviar = () => {
     if (!mensagem.trim()) return;
-    setResposta(prev => [...prev, `🧑‍💻 ${mensagem}`]);
+    adicionarResposta(`🧑‍💻 ${mensagem}`);
     tratarMensagem(mensagem);
     setMensagem("");
   };
 
   const iniciarGravacao = () => {
-    if (typeof window === "undefined") return;
-
     const recognitionConstructor =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -70,14 +133,14 @@ export default function Chatbot() {
     const rec = new recognitionConstructor();
     recognitionRef.current = rec;
 
-    rec.lang = "pt-PT";
+    rec.lang = idiomaVoz;
     rec.continuous = false;
     rec.interimResults = false;
 
     rec.onresult = (event: any) => {
       const texto = event.results[0][0].transcript;
       setMensagem(texto);
-      setResposta(prev => [...prev, `🎙️ ${texto}`]);
+      adicionarResposta(`🎙️ ${texto}`);
       tratarMensagem(texto);
       pararGravacao();
     };
@@ -94,9 +157,7 @@ export default function Chatbot() {
   };
 
   const pararGravacao = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
+    if (recognitionRef.current) recognitionRef.current.stop();
     setGravando(false);
     if (intervaloRef.current) {
       clearInterval(intervaloRef.current);
@@ -104,20 +165,13 @@ export default function Chatbot() {
     }
   };
 
-  useEffect(() => {
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      if (intervaloRef.current) {
-        clearInterval(intervaloRef.current);
-      }
-    };
-  }, []);
+  const trocarIdioma = (idioma: 'pt-PT' | 'pt-BR') => {
+    setIdiomaVoz(idioma);
+    localStorage.setItem("idiomaVoz", idioma);
+  };
 
   return (
     <>
-      {/* Botão flutuante */}
       <Button
         onClick={toggleChat}
         variant="primary"
@@ -134,7 +188,6 @@ export default function Chatbot() {
         💬
       </Button>
 
-      {/* Janela do chatbot */}
       {aberto && (
         <div
           className="card shadow"
@@ -142,23 +195,49 @@ export default function Chatbot() {
             position: "fixed",
             bottom: "90px",
             right: "20px",
-            width: "320px",
+            width: "340px",
             zIndex: 999
           }}
         >
-          <div className="card-header bg-primary text-white">Assistente IA</div>
-          <div className="card-body" style={{ maxHeight: "300px", overflowY: "auto" }}>
-            {resposta.map((msg, i) => (
+          <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <span>Assistente IA</span>
+            <div className="d-flex gap-2 align-items-center">
+              <select
+                className="form-select form-select-sm"
+                value={idiomaVoz}
+                onChange={e => trocarIdioma(e.target.value as 'pt-PT' | 'pt-BR')}
+              >
+                <option value="pt-PT">🇵🇹 pt-PT</option>
+                <option value="pt-BR">🇧🇷 pt-BR</option>
+              </select>
+              <Button
+                variant={vozAtiva ? "light" : "secondary"}
+                size="sm"
+                onClick={() => setVozAtiva(!vozAtiva)}
+              >
+                {vozAtiva ? "🔊" : "🔇"}
+              </Button>
+            </div>
+          </div>
+
+          <div
+            ref={chatRef}
+            className="card-body"
+            style={{ maxHeight: "300px", overflowY: "auto" }}
+          >
+            {respostas.map((msg, i) => (
               <div key={i} className="mb-2">{msg}</div>
             ))}
             {gravando && <div className="text-danger">🎤 Gravando... {tempo}s</div>}
           </div>
+
           <div className="card-footer d-flex gap-2">
             <Form.Control
               type="text"
               value={mensagem}
               onChange={(e) => setMensagem(e.target.value)}
               placeholder="Digite um comando..."
+              onKeyDown={(e) => e.key === "Enter" && handleEnviar()}
             />
             <Button variant="success" onClick={handleEnviar}>Enviar</Button>
             <Button
