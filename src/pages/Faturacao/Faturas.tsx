@@ -110,39 +110,44 @@ const Faturas = () => {
 
         <h5 className="mt-4">Produtos/Serviços</h5>
         {linhas.map((linha, index) => (
-          <div key={index} className="d-flex gap-2 mb-2">
+          <div key={index} className="row mb-2">
+          <div className="col-md-4">
+            <Form.Label>Descrição</Form.Label>
             <Form.Control
               type="text"
               placeholder="Descrição"
               value={linha.descricao}
-              onChange={(e) =>
-                handleLinhaChange(index, "descricao", e.target.value)
-              }
+              onChange={(e) => handleLinhaChange(index, "descricao", e.target.value)}
             />
+          </div>
+          <div className="col-md-2">
+            <Form.Label>Quantidade</Form.Label>
             <Form.Control
               type="number"
               min={1}
               value={linha.quantidade}
-              onChange={(e) =>
-                handleLinhaChange(index, "quantidade", e.target.value)
-              }
+              onChange={(e) => handleLinhaChange(index, "quantidade", e.target.value)}
             />
+          </div>
+          <div className="col-md-3">
+            <Form.Label>Preço Unitário</Form.Label>
             <Form.Control
               type="number"
               step="0.01"
               value={linha.preco}
-              onChange={(e) =>
-                handleLinhaChange(index, "preco", e.target.value)
-              }
+              onChange={(e) => handleLinhaChange(index, "preco", e.target.value)}
             />
+          </div>
+          <div className="col-md-3">
+            <Form.Label>IVA (%)</Form.Label>
             <Form.Control
               type="number"
               value={linha.iva}
-              onChange={(e) =>
-                handleLinhaChange(index, "iva", e.target.value)
-              }
+              onChange={(e) => handleLinhaChange(index, "iva", e.target.value)}
             />
           </div>
+        </div>
+        
         ))}
         <Button variant="secondary" size="sm" onClick={adicionarLinha}>
           + Adicionar Linha

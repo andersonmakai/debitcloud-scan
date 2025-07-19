@@ -14,6 +14,8 @@ import Razao from "../pages/Contabilidade/Razao";
 import Balancetes from "../pages/Contabilidade/Balancetes";
 import CadastroPrincipal from "../pages/CadastroPrincipal";
 import EmpresaForm from "../pages/cadastro/EmpresaForm";
+import FaturacaoIndex from "../pages/Faturacao/FaturacaoIndex";
+
 
 
 const AppRoutes = () => {
@@ -34,6 +36,8 @@ const AppRoutes = () => {
       <Route path="/contabilidade/balancetes" element={<Balancetes />} />
       <Route path="/cadastro" element={<CadastroPrincipal />} />
       <Route path="/cadastro/empresa" element={<EmpresaForm />} />
+      <Route path="/faturacao" element={<FaturacaoIndex />} />
+
     </Routes>
   );
 };

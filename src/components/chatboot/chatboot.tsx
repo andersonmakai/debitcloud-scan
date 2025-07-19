@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { useFatura } from '../../contexts/FaturaContext';
+
 
 const comandos: { [key: string]: string | (() => void) } = {
   "criar fatura": () => navigateTo("/faturacao/faturas"),
@@ -42,6 +44,7 @@ export default function Chatbot() {
   const intervaloRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const navigate = useNavigate();
   const chatRef = useRef<HTMLDivElement>(null);
+  const fatura = useFatura();
 
   useEffect(() => {
     navigateTo = (rota: string) => navigate(rota);
@@ -95,6 +98,42 @@ export default function Chatbot() {
     const chaveEncontrada = Object.keys(comandos).find(key =>
       mensagemLower.includes(key)
     );
+    if (mensagemLower.startsWith("cliente é")) {
+      const nome = mensagemLower.replace("cliente é", "").trim();
+      fatura.setCliente(nome);
+      adicionarResposta(`✅ Cliente definido: ${nome}`);
+      falar(`Cliente definido: ${nome}`);
+      return;
+    }
+    
+    if (mensagemLower.startsWith("produto é")) {
+      // Exemplo: "produto é arroz 2 unidades 1000 kz com iva 14"
+      const regex = /produto é (.+?) (\d+) .*? (\d+(?:[,.]\d+)?) .*? (\d{1,2})/;
+      const match = mensagemLower.match(regex);
+      if (match) {
+        const descricao = match[1];
+        const quantidade = parseInt(match[2]);
+        const preco = parseFloat(match[3].replace(",", "."));
+        const iva = parseInt(match[4]);
+    
+        fatura.adicionarLinha({ descricao, quantidade, preco, iva });
+        const msg = `✅ Produto adicionado: ${descricao}, ${quantidade}un, ${preco}Kz, IVA ${iva}%`;
+        adicionarResposta(msg);
+        falar(msg);
+      } else {
+        adicionarResposta("⚠️ Não entendi o formato do produto.");
+        falar("Formato inválido.");
+      }
+      return;
+    }
+    
+    if (mensagemLower.includes("emitir fatura")) {
+      fatura.emitirFatura();
+      adicionarResposta("✅ Fatura emitida.");
+      falar("Fatura emitida com sucesso.");
+      return;
+    }
+    
 
     if (chaveEncontrada) {
       const acao = comandos[chaveEncontrada];
