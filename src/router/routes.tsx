@@ -15,6 +15,10 @@ import Balancetes from "../pages/Contabilidade/Balancetes";
 import CadastroPrincipal from "../pages/CadastroPrincipal";
 import EmpresaForm from "../pages/cadastro/EmpresaForm";
 import FaturacaoIndex from "../pages/Faturacao/FaturacaoIndex";
+import IAHome from "../pages/IA/IAHome";
+import Scan from "../pages/IA/Scan";
+
+
 
 
 
@@ -37,6 +41,12 @@ const AppRoutes = () => {
       <Route path="/cadastro" element={<CadastroPrincipal />} />
       <Route path="/cadastro/empresa" element={<EmpresaForm />} />
       <Route path="/faturacao" element={<FaturacaoIndex />} />
+      <Route path="/ia" element={<IAHome />} />
+      <Route path="/ia/scan" element={<Scan />} />
+
+
+      
+
 
     </Routes>
   );
