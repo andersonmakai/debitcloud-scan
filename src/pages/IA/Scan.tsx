@@ -70,12 +70,21 @@ const Scan = () => {
       <h3 className="fw-bold mb-3">📷 Scanner em tempo real</h3>
 
       <Card className="p-3 mb-4 shadow-sm">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          style={{ width: "100%", borderRadius: "8px", border: "1px solid #ccc" }}
-        />
+      <video
+  ref={videoRef}
+  autoPlay
+  playsInline
+  style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    objectFit: 'cover',
+    zIndex: 9999,
+  }}
+/>
+
         <canvas ref={canvasRef} style={{ display: "none" }} />
 
         <Button
