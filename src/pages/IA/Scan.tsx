@@ -13,16 +13,30 @@ const Scan = () => {
   useEffect(() => {
     const startCamera = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { exact: 'environment' } },
+          audio: false,
+        });
+  
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
       } catch (err) {
-        alert("Erro ao acessar câmera: " + err);
+        console.error('Erro ao acessar câmera:', err);
       }
     };
+  
     startCamera();
+  
+    return () => {
+      // Encerrar a câmera ao desmontar o componente
+      if (videoRef.current && videoRef.current.srcObject) {
+        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+        tracks.forEach(track => track.stop());
+      }
+    };
   }, []);
+  
 
   // Tirar foto e processar com OCR
   const capturarEProcessar = async () => {
